@@ -12,3 +12,7 @@ dist/
 # OS
 .DS_Store
 Thumbs.db
+
+# Llaves de GCP (cuenta de servicio de Wazuh)
+*credentials*.json
+*.json.key

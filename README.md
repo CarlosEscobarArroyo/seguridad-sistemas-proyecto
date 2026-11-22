@@ -116,3 +116,9 @@ Abre `http://localhost:5173`.
 4. **IDOR / BOLA (`GET /api/pedidos/{id}`)**
    - Consultar directamente `/api/pedidos/1` o `/api/pedidos/2` (o interceptar con Burp Suite al pulsar *Ver Boleta*).
    - **Resultado:** Expone direcciones privadas y últimos 4 dígitos de tarjeta de otros clientes.
+
+---
+
+## Conexión con Wazuh SIEM
+
+La configuración de **Cloud Logging → Log Sink → Pub/Sub → Wazuh**, las reglas de detección y los scripts de prueba están en [`wazuh/`](wazuh/README.md).

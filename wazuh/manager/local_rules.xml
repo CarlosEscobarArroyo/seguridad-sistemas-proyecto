@@ -1,0 +1,118 @@
+<!--
+  Reglas personalizadas para RappiSim (Cloud Run -> Cloud Logging -> Pub/Sub -> Wazuh)
+  Ubicación en el manager: /var/ossec/etc/rules/local_rules.xml
+  (añadir este bloque al final del archivo, no borrar lo que ya tenga)
+
+  Las reglas base de GCP de Wazuh (0690-gcp_rules.xml) clasifican cada evento
+  por severidad: 65039 DEFAULT, 65040 INFO, 65041 WARNING, 65042 NOTICE, 65043 ERROR.
+  Por eso colgamos nuestra regla base de esas, y no directamente de 65000.
+-->
+<group name="rappisim,cloudrun,gcp,web,">
+
+  <!-- 100100: cualquier request HTTP de la web en Cloud Run -->
+  <rule id="100100" level="3">
+    <if_sid>65039,65040,65041,65042,65043</if_sid>
+    <field name="gcp.jsonPayload.service">^rappi-web-simulada$</field>
+    <description>RappiSim: $(gcp.jsonPayload.method) $(gcp.jsonPayload.path) -> $(gcp.jsonPayload.status_code) desde $(gcp.jsonPayload.src_ip)</description>
+  </rule>
+
+  <!-- ===================== SQL INJECTION ===================== -->
+
+  <!-- 100110: SQLi en el body (login: ' OR '1'='1' -\-) -->
+  <rule id="100110" level="12">
+    <if_sid>100100</if_sid>
+    <field name="gcp.jsonPayload.body" type="pcre2">(?i)'\s*(or|and)\s+'?\w+'?\s*=\s*'?\w+|union\s+(all\s+)?select|'\s*--|;\s*(drop|delete|insert|update)\s</field>
+    <description>RappiSim: posible SQL Injection en el body de $(gcp.jsonPayload.path) desde $(gcp.jsonPayload.src_ip)</description>
+    <mitre>
+      <id>T1190</id>
+    </mitre>
+    <group>attack,sql_injection,owasp_a03,</group>
+  </rule>
+
+  <!-- 100111: SQLi en el query string (buscador, viene URL-encoded: %27%20UNION%20SELECT) -->
+  <rule id="100111" level="12">
+    <if_sid>100100</if_sid>
+    <field name="gcp.jsonPayload.query" type="pcre2">(?i)union(%20|\+|\s)+(all(%20|\+|\s)+)?select|(%27|')(%20|\+|\s)*(or|and)(%20|\+|\s)+|(%27|')(%20|\+|\s)*(--|%2D%2D)|information_schema|pg_sleep</field>
+    <description>RappiSim: posible SQL Injection en query string de $(gcp.jsonPayload.path) desde $(gcp.jsonPayload.src_ip)</description>
+    <mitre>
+      <id>T1190</id>
+    </mitre>
+    <group>attack,sql_injection,owasp_a03,</group>
+  </rule>
+
+  <!-- 100112: error de PostgreSQL devuelto (500) en endpoints de API: síntoma típico de SQLi -->
+  <rule id="100112" level="7">
+    <if_sid>100100</if_sid>
+    <field name="gcp.jsonPayload.path">^/api/</field>
+    <field name="gcp.jsonPayload.status_code">^500$</field>
+    <description>RappiSim: error 500 en $(gcp.jsonPayload.path) (posible prueba de SQLi) desde $(gcp.jsonPayload.src_ip)</description>
+    <group>attack,sql_injection,</group>
+  </rule>
+
+  <!-- ===================== STORED XSS ===================== -->
+
+  <!-- 100120: payload XSS en el body (reseñas) -->
+  <rule id="100120" level="10">
+    <if_sid>100100</if_sid>
+    <field name="gcp.jsonPayload.body" type="pcre2">(?i)\x3c\s*script|\x3c\s*img[^\x3e]*\son\w+\s*=|\son(error|load|mouseover|focus|click)\s*=|javascript\s*:|\x3c\s*svg[^\x3e]*\son\w+\s*=|\x3c\s*iframe</field>
+    <description>RappiSim: posible XSS almacenado en $(gcp.jsonPayload.path) desde $(gcp.jsonPayload.src_ip)</description>
+    <mitre>
+      <id>T1059.007</id>
+    </mitre>
+    <group>attack,xss,owasp_a03,</group>
+  </rule>
+
+  <!-- 100121: XSS en query string (URL-encoded) -->
+  <rule id="100121" level="10">
+    <if_sid>100100</if_sid>
+    <field name="gcp.jsonPayload.query" type="pcre2">(?i)(%3C|\x3c)(%20|\s)*(script|img|svg|iframe)|on(error|load)(%20|\s)*(%3D|=)|javascript(%3A|:)</field>
+    <description>RappiSim: posible XSS en query string de $(gcp.jsonPayload.path) desde $(gcp.jsonPayload.src_ip)</description>
+    <group>attack,xss,</group>
+  </rule>
+
+  <!-- ===================== IDOR / BOLA ===================== -->
+
+  <!-- 100130: acceso a una boleta concreta (normal, nivel bajo; sirve de base) -->
+  <rule id="100130" level="3">
+    <if_sid>100100</if_sid>
+    <field name="gcp.jsonPayload.method">^GET$</field>
+    <field name="gcp.jsonPayload.path" type="pcre2">^/api/pedidos/\d+$</field>
+    <description>RappiSim: consulta de pedido $(gcp.jsonPayload.path) desde $(gcp.jsonPayload.src_ip)</description>
+    <group>idor_candidate,</group>
+  </rule>
+
+  <!-- 100131: misma IP recorriendo varios IDs de pedido distintos en poco tiempo = enumeración IDOR -->
+  <rule id="100131" level="10" frequency="4" timeframe="60">
+    <if_matched_sid>100130</if_matched_sid>
+    <same_field>gcp.jsonPayload.src_ip</same_field>
+    <different_field>gcp.jsonPayload.path</different_field>
+    <description>RappiSim: posible IDOR/BOLA - $(gcp.jsonPayload.src_ip) consultó varios pedidos distintos en 60 s</description>
+    <mitre>
+      <id>T1190</id>
+    </mitre>
+    <group>attack,idor,owasp_a01,</group>
+  </rule>
+
+  <!-- ===================== FUERZA BRUTA ===================== -->
+
+  <!-- 100140: login fallido -->
+  <rule id="100140" level="5">
+    <if_sid>100100</if_sid>
+    <field name="gcp.jsonPayload.path">^/api/login$</field>
+    <field name="gcp.jsonPayload.status_code">^401$</field>
+    <description>RappiSim: login fallido desde $(gcp.jsonPayload.src_ip)</description>
+    <group>authentication_failed,</group>
+  </rule>
+
+  <!-- 100141: muchos logins fallidos desde la misma IP -->
+  <rule id="100141" level="10" frequency="6" timeframe="60">
+    <if_matched_sid>100140</if_matched_sid>
+    <same_field>gcp.jsonPayload.src_ip</same_field>
+    <description>RappiSim: posible fuerza bruta en /api/login desde $(gcp.jsonPayload.src_ip)</description>
+    <mitre>
+      <id>T1110</id>
+    </mitre>
+    <group>attack,brute_force,authentication_failures,</group>
+  </rule>
+
+</group>
