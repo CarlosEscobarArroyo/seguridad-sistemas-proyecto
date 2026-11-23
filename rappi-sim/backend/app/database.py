@@ -68,6 +68,15 @@ def init_db(retries: int = 8, delay: float = 2.0):
                 );
             """)
 
+            # IP bloqueadas por el agente SOC como acción de respuesta
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS ips_bloqueadas (
+                    ip TEXT PRIMARY KEY,
+                    motivo TEXT NOT NULL DEFAULT '',
+                    creado_en TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                );
+            """)
+
             # Datos semilla iniciales
             cur.execute("SELECT COUNT(*) AS count FROM users;")
             if cur.fetchone()["count"] == 0:
@@ -112,5 +121,15 @@ def init_db(retries: int = 8, delay: float = 2.0):
                 )
 
         conn.commit()
+    finally:
+        conn.close()
+
+
+def ip_bloqueada(ip: str) -> bool:
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT 1 FROM ips_bloqueadas WHERE ip = %s;", (ip,))
+            return cur.fetchone() is not None
     finally:
         conn.close()

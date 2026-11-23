@@ -1,0 +1,298 @@
+/* Chat con el agente: cabecera, conversación con desplazamiento propio y redactor fijo abajo. */
+
+.vista-chat {
+  background: var(--superficie);
+}
+
+.conversacion {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  height: 100%;
+}
+
+.conv-cab,
+.conv-columna,
+.redactor {
+  width: 100%;
+  max-width: 820px;
+  margin-inline: auto;
+}
+
+.conv-cab {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 16px 12px;
+}
+
+.conv-cab h1 {
+  font-size: 1.25rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.conv-cab p {
+  margin-top: 3px;
+  font-size: 0.8125rem;
+}
+
+@media (max-width: 599.98px) {
+  .conv-cab p {
+    display: none;
+  }
+}
+
+.conv-mensajes {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.conv-mensajes:focus-visible {
+  outline-offset: -2px;
+}
+
+.conv-columna {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  min-height: 100%;
+  padding: 12px 16px 8px;
+}
+
+/* --- Estado inicial ---------------------------------------------------------------------- */
+
+.conv-vacio {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  margin: auto 0;
+  padding: 16px 0 24px;
+  text-align: center;
+}
+
+.conv-vacio h2 {
+  margin-top: 10px;
+  font-size: 1.5rem;
+  font-weight: 650;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+
+.conv-vacio > p {
+  max-width: 48ch;
+}
+
+.sugerencias {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 10px;
+  width: 100%;
+  margin-top: 22px;
+}
+
+.sugerencia {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  height: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-l);
+  background: var(--superficie);
+  text-align: left;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s;
+}
+
+.sugerencia:hover {
+  border-color: var(--borde-fuerte);
+  background: var(--fondo);
+}
+
+.sugerencia-icono {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: var(--acento-suave);
+  color: var(--acento-texto);
+}
+
+.sugerencia-titulo {
+  display: block;
+  font-weight: 550;
+}
+
+.sugerencia-texto {
+  display: block;
+  margin-top: 2px;
+  color: var(--texto-3);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+/* --- Mensajes ------------------------------------------------------------------------------ */
+
+.msg {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.msg-usuario {
+  align-self: flex-end;
+  max-width: min(85%, 600px);
+  padding: 10px 14px;
+  border-radius: 16px 16px 4px 16px;
+  background: var(--superficie-3);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.msg-agente {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+
+.msg-autor {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--texto-2);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.msg-agente .md-t1 {
+  font-size: 1.125rem;
+}
+
+.msg-agente .md-t2 {
+  font-size: 1rem;
+}
+
+.msg-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--peligro-borde);
+  border-radius: var(--radio-m);
+  background: var(--peligro-suave);
+  color: var(--peligro);
+  font-weight: 500;
+}
+
+.msg-error .icono {
+  margin-top: 2px;
+}
+
+.conv-estado-caja {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px 5px 10px;
+  border-radius: 999px;
+  background: var(--acento-suave);
+  color: var(--acento-texto);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+/* --- Redactor ------------------------------------------------------------------------------ */
+
+.redactor {
+  padding: 4px 16px 12px;
+}
+
+.redactor-caja {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 7px 7px 7px 16px;
+  border: 1px solid var(--borde-campo);
+  border-radius: 18px;
+  background: var(--superficie);
+  box-shadow: var(--sombra-2);
+  transition: border-color 0.15s;
+}
+
+.redactor-caja:focus-within {
+  border-color: var(--acento);
+  outline: 2px solid var(--acento);
+  outline-offset: -1px;
+}
+
+.redactor textarea {
+  flex: 1;
+  min-width: 0;
+  max-height: 184px;
+  padding: 7px 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  /* 16 px evita que iOS amplíe la página al enfocar el campo. */
+  font-size: 1rem;
+  line-height: 1.5;
+  resize: none;
+}
+
+.redactor textarea::placeholder {
+  color: var(--texto-3);
+  opacity: 1;
+  white-space: nowrap;
+}
+
+.boton-enviar {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: var(--acento);
+  color: var(--sobre-acento);
+  transition:
+    background-color 0.15s,
+    opacity 0.15s;
+}
+
+.boton-enviar:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.boton-enviar:disabled {
+  background: var(--superficie-3);
+  color: var(--texto-3);
+}
+
+.redactor-ayuda {
+  margin-top: 8px;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+@media (max-width: 599.98px), (pointer: coarse) {
+  .redactor-ayuda {
+    display: none;
+  }
+}
+
+/* Chat alternativo (ChatKit): el componente web ocupa el contenedor del chat. Se selecciona por
+   etiqueta porque React 18 no traslada `className` a los elementos personalizados. */
+.vista-chat openai-chatkit {
+  display: block;
+  width: 100%;
+  max-width: 900px;
+  height: 100%;
+  margin: 0 auto;
+}

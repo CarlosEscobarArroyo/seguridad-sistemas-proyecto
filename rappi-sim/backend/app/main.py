@@ -3,10 +3,11 @@ import json
 import time
 from datetime import datetime, timezone
 from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from app.database import init_db
-from app.routers import auth, productos, pedidos, resenas
+from app.database import init_db, ip_bloqueada
+from app.routers import admin, auth, productos, pedidos, resenas
 
 app = FastAPI(title="RappiSim - Web Vulnerable SOC")
 
@@ -31,13 +32,31 @@ async def structured_json_logger(request: Request, call_next):
     body_bytes = await request.body()
     body_str = body_bytes.decode("utf-8", errors="ignore")
 
-    response = await call_next(request)
-    duration_ms = round((time.time() - start_time) * 1000, 2)
-
+    # En Cloud Run, la IP real del cliente es la primera de X-Forwarded-For
     client_ip = request.headers.get(
         "x-forwarded-for",
         request.client.host if request.client else "unknown"
-    )
+    ).split(",")[0].strip()
+
+    # ACCIÓN DE RESPUESTA: las IP bloqueadas por el agente SOC reciben 403.
+    # Las rutas de administración quedan exentas para que el agente pueda desbloquear.
+    blocked = False
+    is_admin = request.url.path.startswith("/api/admin")
+    if is_admin:
+        # El cuerpo de las acciones del SOC cita payloads de ataques (en el motivo
+        # del bloqueo); no se registra para que Wazuh no lo detecte como un ataque.
+        body_str = "[omitido: operación de respuesta del SOC]"
+    else:
+        try:
+            blocked = ip_bloqueada(client_ip)
+        except Exception:
+            blocked = False
+
+    if blocked:
+        response = JSONResponse(status_code=403, content={"detail": "IP bloqueada por el SOC"})
+    else:
+        response = await call_next(request)
+    duration_ms = round((time.time() - start_time) * 1000, 2)
 
     log_payload = {
         "severity": "WARNING" if response.status_code >= 400 else "INFO",
@@ -51,12 +70,14 @@ async def structured_json_logger(request: Request, call_next):
         "body": body_str[:1000],
         "user_agent": request.headers.get("user-agent", ""),
         "status_code": response.status_code,
+        "blocked": blocked,
         "duration_ms": duration_ms,
     }
     print(json.dumps(log_payload), flush=True)
     return response
 
 
+app.include_router(admin.router)
 app.include_router(auth.router)
 app.include_router(productos.router)
 app.include_router(pedidos.router)

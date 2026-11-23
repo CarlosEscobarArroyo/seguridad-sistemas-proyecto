@@ -1,118 +1,71 @@
-# RappiSim - Aplicación Web Vulnerable para Proyecto SOC (Wazuh SIEM + GCP)
+# Proyecto SOC — Monorepo
 
-Aplicación full-stack (**React + FastAPI + PostgreSQL**) diseñada como entorno controlado de pruebas de seguridad con telemetría estructurada en **JSON (`stdout`)** para **Google Cloud Logging → Pub/Sub → Wazuh SIEM**.
+| Carpeta | Contenido |
+|---|---|
+| [`rappi-sim/`](rappi-sim/README.md) | Aplicación web vulnerable (React + FastAPI + PostgreSQL) que genera la telemetría para Wazuh. |
+| [`wazuh/`](wazuh/README.md) | Tubería Cloud Logging → Pub/Sub → Wazuh: script de GCP, reglas de detección de RappiSim y pruebas de ataque. |
+| `agente/backend/` | Agente SOC en Google ADK: recibe alertas de Wazuh, reúne evidencia (Cloud Logging y Wazuh), consulta playbooks (RAG), ejecuta acciones de respuesta y registra la investigación en Firestore. |
+| `agente/frontend/` | Chat en React con ChatKit, conectado al agente por `POST /chatkit`. |
 
----
+## Flujo desplegado en GCP (`seguridad-sistemas-proyecto`)
 
-## Estructura del Proyecto
-
-```text
-rappi-sim/
-├── backend/
-│   ├── app/
-│   │   ├── __init__.py
-│   │   ├── main.py              # FastAPI, CORS, Middleware JSON Logs y StaticFiles
-│   │   ├── database.py          # Conexión PostgreSQL y datos semilla
-│   │   ├── schemas.py           # Modelos Pydantic
-│   │   └── routers/
-│   │       ├── __init__.py
-│   │       ├── auth.py          # POST /api/login (SQL Injection)
-│   │       ├── productos.py     # GET /api/productos (SQL Injection UNION SELECT)
-│   │       ├── pedidos.py       # GET /api/pedidos/{id} (IDOR / BOLA)
-│   │       └── resenas.py       # POST /api/resenas (Stored XSS)
-│   ├── .env
-│   ├── .env.example
-│   └── requirements.txt
-├── frontend/
-│   ├── index.html
-│   ├── package.json
-│   ├── vite.config.js
-│   └── src/
-│       ├── main.jsx
-│       ├── App.jsx
-│       └── App.css
-├── Dockerfile                   # Build unificado (React + FastAPI) para Cloud Run
-└── docker-compose.yml           # Entorno local completo (App + PostgreSQL)
+```
+RappiSim (Cloud Run) → Cloud Logging → sink → Pub/Sub → Wazuh (VM) ──alerta nivel ≥10──► Agente SOC (Cloud Run)
+                                                                                          │ evidencia: Cloud Logging y Wazuh
+        ◄── acciones de respuesta: bloquear IP, eliminar reseña ──────────────────────────┤ playbooks: RAG local
+                                                                                          └► Firestore (investigaciones)
 ```
 
----
+| Recurso | Dónde |
+|---|---|
+| Web simulada | https://rappi-web-simulada-574593344568.us-central1.run.app |
+| Agente SOC y panel (usuario y contraseña) | https://agente-soc-574593344568.us-central1.run.app |
+| Investigaciones | Firestore, colección `investigaciones` |
+| Wazuh | VM `wazuh` (`us-central1-a`) |
 
-## Opción 1: Levantar todo rápido con Docker Compose (Recomendado)
+Probar de punta a punta: `bash wazuh/pruebas/simular_ataques.sh <URL de la web>` y, uno o dos minutos después, revisar el panel del agente. El agente puede bloquear la IP desde la que se lanzan los ataques; para desbloquearla:
 
-1. Abre una terminal en la carpeta `rappi-sim/` y ejecuta:
-   ```bash
-   docker-compose up --build
-   ```
-2. Abre en tu navegador:
-   - **Web App (React + API):** `http://localhost:8080`
-   - **Swagger Docs (FastAPI):** `http://localhost:8080/docs`
-
----
-
-## Opción 2: Levantar en modo desarrollo local (sin Docker)
-
-### Backend
-1. Crea una base de datos llamada `rappisim` en tu PostgreSQL local.
-2. Configura tus credenciales en `backend/.env`:
-   ```env
-   DATABASE_URL=postgresql://postgres:postgres@localhost:5432/rappisim
-   ```
-3. Instala dependencias y arranca Uvicorn:
-   ```powershell
-   cd backend
-   python -m venv venv
-   .env\Scriptsctivate
-   pip install -r requirements.txt
-   uvicorn app.main:app --reload --port 8000
-   ```
-
-### Frontend
-En otra terminal:
-```powershell
-cd frontend
-npm install
-npm run dev
+```bash
+TOKEN=$(gcloud secrets versions access latest --secret rappi-admin-token --project seguridad-sistemas-proyecto)
+curl -X DELETE -H "X-Admin-Token: $TOKEN" <URL de la web>/api/admin/bloqueos/<IP>
 ```
-Abre `http://localhost:5173`.
 
----
+## Panel del agente (investigaciones y chat)
 
-## Despliegue en Google Cloud Run
+https://agente-soc-574593344568.us-central1.run.app — pide usuario `soc` y la contraseña guardada en Secret Manager:
 
-1. Sube la imagen a Artifact Registry / Container Registry o despliega directo desde el código fuente:
+```bash
+gcloud secrets versions access latest --secret panel-password --project seguridad-sistemas-proyecto
+```
+
+- **Investigaciones:** lista con severidad, estado, acciones y duración; al elegir una se ve la conclusión, la alerta que la originó y el reporte completo. Se actualiza sola.
+- **Chat con el agente:** chat propio conectado al agente. ChatKit queda como alternativa si se registra el dominio en la plataforma de OpenAI y se compila el frontend con `VITE_CHATKIT_DOMAIN_KEY`.
+
+`POST /alertas` no acepta esa contraseña: solo el token de identidad de la cuenta de servicio de la VM de Wazuh.
+
+## Redesplegar
+
+```bash
+# Web simulada
+cd rappi-sim && gcloud run deploy rappi-web-simulada --source . --region us-central1 --project seguridad-sistemas-proyecto
+# Agente + panel (compila el frontend y conserva la configuración del servicio)
+bash agente/desplegar.sh
+```
+
+## Ejecutar el agente en local
+
+1. Configura `agente/backend/.env` (copia de `.env.example`): credenciales de Gemini y, opcionalmente, el indexador de Wazuh. Sin `WAZUH_INDEXER_URL`, el agente usa alertas de ejemplo simuladas.
+2. Backend (puerto 8000):
    ```bash
-   gcloud run deploy rappi-web-simulada \
-     --source . \
-     --platform managed \
-     --region us-central1 \
-     --allow-unauthenticated \
-     --set-env-vars DATABASE_URL="postgresql://USUARIO:PASSWORD@IP_POSTGRES:5432/rappisim"
+   cd agente/backend
+   agents-cli install
+   uv run uvicorn app.fast_api_app:app --port 8000 --reload
    ```
-2. Todos los requests HTTP se imprimen en `stdout` en formato JSON estructurado, por lo que **Cloud Logging** los captura automáticamente para enviarlos por **Log Sink → Pub/Sub → Wazuh SIEM**.
+3. Frontend (puerto 5174; el backend lo admite por `ALLOW_ORIGINS` en `.env`):
+   ```bash
+   cd agente/frontend
+   npm install
+   npm run dev
+   ```
 
----
-
-## Guía de Pruebas de Ataque (Para el Integrante 4)
-
-1. **SQL Injection - Bypass de Autenticación (`POST /api/login`)**
-   - **Correo:** `' OR '1'='1' --`
-   - **Contraseña:** `cualquiercosa`
-   - **Resultado:** Inicia sesión como `admin@rappi.com` (`Administrador SOC`).
-
-2. **SQL Injection - Extracción de Datos (`GET /api/productos?q=...`)**
-   - En la barra de búsqueda superior escribir:
-     ```sql
-     ' UNION SELECT id, email, password, 99.9, rol FROM users --
-     ```
-   - **Resultado:** Expone los correos, contraseñas y roles de la tabla `users` en el catálogo.
-
-3. **Stored XSS (`POST /api/resenas`)**
-   - Ir a **Mis Pedidos y Reseñas** y publicar como comentario:
-     ```html
-     <img src=x onerror="alert('XSS ejecutado en RappiSim')">
-     ```
-   - **Resultado:** Ejecuta JavaScript arbitrario en el navegador cada vez que se carga la sección de reseñas.
-
-4. **IDOR / BOLA (`GET /api/pedidos/{id}`)**
-   - Consultar directamente `/api/pedidos/1` o `/api/pedidos/2` (o interceptar con Burp Suite al pulsar *Ver Boleta*).
-   - **Resultado:** Expone direcciones privadas y últimos 4 dígitos de tarjeta de otros clientes.
+La base de conocimiento del RAG son los Markdown de `agente/backend/app/knowledge/`. Se indexan en una colección de Vector Search 2.0 de Agent Platform (`soc-conocimiento`), que genera los embeddings; tras añadir o cambiar un playbook, vuelve a indexar con `cd agente/backend && uv run python -m app.rag`. Las investigaciones se guardan en Firestore (o en `agente/backend/reportes/` con `INVESTIGACIONES_STORE=archivo`).

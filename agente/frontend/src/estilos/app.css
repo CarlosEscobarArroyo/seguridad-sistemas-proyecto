@@ -1,0 +1,168 @@
+/* Armazón: barra superior fija y, debajo, la vista activa ocupando el resto de la ventana. */
+
+.app {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 100vh;
+  height: 100dvh;
+}
+
+.saltar {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 20;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: var(--acento);
+  color: var(--sobre-acento);
+  font-weight: 600;
+  transform: translateY(-200%);
+}
+
+.saltar:focus {
+  transform: none;
+}
+
+/* --- Barra superior --------------------------------------------------------------------- */
+
+.barra {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: var(--barra-alto);
+  padding: 0 12px 0 16px;
+  border-bottom: 1px solid var(--borde);
+  background: var(--superficie);
+}
+
+.barra-marca {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-right: 12px;
+  border-radius: 8px;
+}
+
+.barra-nombre {
+  font-size: 0.9375rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.barra-contexto {
+  padding-left: 10px;
+  border-left: 1px solid var(--borde);
+  color: var(--texto-3);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
+.barra-nav {
+  display: flex;
+  gap: 2px;
+  margin-right: auto;
+}
+
+.barra-nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 8px;
+  color: var(--texto-2);
+  font-weight: 500;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+}
+
+.barra-nav a:hover {
+  background: var(--superficie-2);
+  color: var(--texto);
+}
+
+.barra-nav a[aria-current='page'] {
+  background: var(--superficie-3);
+  color: var(--texto);
+}
+
+.barra-nav a[aria-current='page'] .icono {
+  color: var(--acento-texto);
+}
+
+@media (max-width: 719.98px) {
+  .barra-contexto {
+    display: none;
+  }
+}
+
+@media (max-width: 479.98px) {
+  .barra {
+    padding: 0 8px 0 12px;
+    gap: 4px;
+  }
+
+  .barra-marca {
+    margin-right: 6px;
+  }
+
+  .barra-nombre {
+    display: none;
+  }
+
+  .barra-nav a {
+    padding: 0 10px;
+  }
+}
+
+@media (max-width: 379.98px) {
+  .barra-nav .icono {
+    display: none;
+  }
+}
+
+/* --- Vistas ------------------------------------------------------------------------------ */
+
+.vista {
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.vista[hidden] {
+  display: none;
+}
+
+.vista:focus {
+  outline: none;
+}
+
+.solo-ancho {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .solo-estrecho {
+    display: none !important;
+  }
+
+  .solo-ancho {
+    display: revert;
+  }
+}
+
+/* El texto de algunos botones se retira cuando falta sitio; el nombre lo da su aria-label. */
+@media (max-width: 599.98px) {
+  .barra-texto {
+    display: none;
+  }
+
+  .boton:has(> .barra-texto) {
+    width: 36px;
+    padding: 0;
+  }
+}

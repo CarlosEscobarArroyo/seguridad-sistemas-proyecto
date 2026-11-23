@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="description" content="Panel del agente que investiga las alertas de Wazuh sobre RappiSim." />
+    <title>Agente SOC</title>
+    <link rel="icon" type="image/svg+xml" href="/src/assets/favicon.svg" />
+    <script>
+      // Aplica el tema antes del primer pintado: el elegido con el conmutador o, si no hay,
+      // el del sistema. src/lib/tema.js usa la misma clave y los mismos valores.
+      ;(function () {
+        var tema = null
+        try {
+          tema = localStorage.getItem('agente-soc:tema')
+        } catch (e) {}
+        if (tema !== 'claro' && tema !== 'oscuro') {
+          tema = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'oscuro' : 'claro'
+        }
+        document.documentElement.dataset.tema = tema
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>Este panel necesita JavaScript para funcionar.</noscript>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

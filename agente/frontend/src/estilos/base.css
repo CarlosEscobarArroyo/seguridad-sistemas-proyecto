@@ -1,0 +1,541 @@
+/* Base: reinicio mínimo, tipografía y piezas compartidas (botones, insignias, avisos, esqueletos). */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--desplazador) transparent;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  overflow: hidden; /* se desplazan los paneles, nunca la página */
+  background: var(--fondo);
+  color: var(--texto);
+  font-family: var(--fuente);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+ul,
+ol,
+dl,
+dd,
+pre,
+figure {
+  margin: 0;
+}
+
+ul,
+ol {
+  padding: 0;
+  list-style: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+svg {
+  flex-shrink: 0;
+}
+
+code,
+pre,
+.mono {
+  font-family: var(--fuente-mono);
+  font-size: 0.8125rem;
+  font-variant-ligatures: none;
+}
+
+::selection {
+  background: var(--acento-suave-2);
+  color: var(--texto);
+}
+
+/* Foco visible y uniforme en todo lo interactivo. */
+:focus-visible {
+  outline: 2px solid var(--acento);
+  outline-offset: 2px;
+}
+
+[tabindex='-1']:focus-visible {
+  outline-offset: 4px;
+}
+
+/* --- Utilidades ------------------------------------------------------------------------ */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.tenue {
+  color: var(--texto-3);
+}
+
+.icono {
+  display: block;
+}
+
+.girando {
+  animation: giro 0.9s linear infinite;
+}
+
+@keyframes giro {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes latido {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--acento) 45%, transparent);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 6px transparent;
+  }
+}
+
+/* Rótulo de sección pequeño, en monoespaciada y mayúsculas. */
+.rotulo,
+.antetitulo {
+  font-family: var(--fuente-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-3);
+}
+
+.enlace {
+  color: var(--acento-texto);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 3px;
+  transition: text-decoration-color 0.15s;
+}
+
+.enlace:hover {
+  text-decoration-color: currentColor;
+}
+
+button.enlace {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+/* --- Botones --------------------------------------------------------------------------- */
+
+.boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: 8px;
+  background: var(--superficie);
+  color: var(--texto);
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+  box-shadow: var(--sombra-1);
+  transition:
+    background-color 0.15s,
+    border-color 0.15s;
+}
+
+.boton:hover:not(:disabled) {
+  background: var(--superficie-2);
+}
+
+.boton:disabled {
+  color: var(--texto-3);
+  box-shadow: none;
+  opacity: 0.7;
+}
+
+.boton.chico {
+  min-height: 30px;
+  padding: 0 10px;
+  gap: 6px;
+  font-size: 0.8125rem;
+}
+
+.boton.fantasma {
+  border-color: transparent;
+  background: none;
+  box-shadow: none;
+  color: var(--texto-2);
+  padding: 0 10px 0 8px;
+}
+
+.boton.fantasma:hover {
+  background: var(--superficie-2);
+  color: var(--texto);
+}
+
+.boton-icono {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--texto-2);
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+}
+
+.boton-icono:hover:not(:disabled) {
+  background: var(--superficie-3);
+  color: var(--texto);
+}
+
+.boton-icono:disabled {
+  color: var(--borde-fuerte);
+}
+
+.boton-icono.chico {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radio-s);
+}
+
+/* --- Severidad, estado e insignias ------------------------------------------------------ */
+
+.sev-critica {
+  --sev: var(--sev-critica);
+}
+
+.sev-alta {
+  --sev: var(--sev-alta);
+}
+
+.sev-media {
+  --sev: var(--sev-media);
+}
+
+.sev-baja {
+  --sev: var(--sev-baja);
+}
+
+.sev-ninguna {
+  --sev: var(--sev-ninguna);
+}
+
+.glifo-sev .encendida {
+  fill: var(--sev);
+}
+
+.glifo-sev .apagada {
+  fill: var(--sev-pista);
+}
+
+.sev,
+.estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--texto);
+  white-space: nowrap;
+}
+
+.estado {
+  color: var(--texto-2);
+}
+
+.estado-en_curso {
+  color: var(--acento-texto);
+}
+
+.estado-error {
+  color: var(--peligro);
+}
+
+.estado-sin_registrar {
+  color: var(--atencion);
+}
+
+.estado-concluida .icono {
+  color: var(--exito);
+}
+
+.insignia {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--borde);
+  border-radius: 999px;
+  background: var(--superficie);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.insignia.tipo {
+  border-color: transparent;
+  background: var(--superficie-2);
+  color: var(--texto-2);
+}
+
+.insignia.estado-en_curso {
+  border-color: var(--acento-suave-2);
+  background: var(--acento-suave);
+}
+
+.insignia.estado-error {
+  border-color: var(--peligro-borde);
+  background: var(--peligro-suave);
+}
+
+.insignia.estado-sin_registrar {
+  border-color: var(--atencion-borde);
+  background: var(--atencion-suave);
+}
+
+.insignia.bloqueada {
+  min-height: 22px;
+  padding: 0 8px;
+  gap: 5px;
+  font-size: 0.75rem;
+  color: var(--texto-2);
+}
+
+.punto-vivo {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--acento);
+  animation: latido 1.8s ease-out infinite;
+}
+
+/* --- Avisos ------------------------------------------------------------------------------ */
+
+.aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-m);
+  background: var(--superficie-2);
+  color: var(--texto);
+  font-size: 0.875rem;
+}
+
+.aviso > .icono {
+  margin-top: 1px;
+  color: var(--texto-2);
+}
+
+.aviso-texto {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.aviso-texto > * + * {
+  margin-top: 2px;
+}
+
+.aviso-titulo {
+  font-weight: 600;
+}
+
+.aviso-lista li + li {
+  margin-top: 2px;
+}
+
+.aviso-pre {
+  margin-top: 6px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.aviso-curso {
+  border-color: var(--acento-suave-2);
+  background: var(--acento-suave);
+}
+
+.aviso-curso > .icono {
+  color: var(--acento-texto);
+}
+
+.aviso-peligro {
+  border-color: var(--peligro-borde);
+  background: var(--peligro-suave);
+}
+
+.aviso-peligro > .icono {
+  color: var(--peligro);
+}
+
+.aviso-atencion {
+  border-color: var(--atencion-borde);
+  background: var(--atencion-suave);
+}
+
+.aviso-atencion > .icono {
+  color: var(--atencion);
+}
+
+/* --- Estado central (vacío o error a todo el panel) --------------------------------------- */
+
+.central {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  max-width: 460px;
+  margin: auto;
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--texto-2);
+}
+
+.central-icono {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 6px;
+  border: 1px solid var(--borde);
+  border-radius: 14px;
+  background: var(--superficie);
+  color: var(--texto-2);
+  box-shadow: var(--sombra-1);
+}
+
+.central-peligro .central-icono {
+  border-color: var(--peligro-borde);
+  background: var(--peligro-suave);
+  color: var(--peligro);
+}
+
+.central-titulo {
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--texto);
+  text-wrap: balance;
+}
+
+.central .boton {
+  margin-top: 10px;
+}
+
+/* --- Esqueletos de carga ------------------------------------------------------------------ */
+
+.hueso {
+  display: block;
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--superficie-3) 25%, var(--superficie-2) 37%, var(--superficie-3) 63%);
+  background-size: 400% 100%;
+  animation: brillo 1.4s ease infinite;
+}
+
+.hueso.alto {
+  height: 14px;
+}
+
+.hueso.titulo {
+  height: 22px;
+}
+
+.hueso.bloque {
+  width: 100%;
+  border-radius: var(--radio-m);
+}
+
+.hueso-salto {
+  display: block;
+  height: 10px;
+}
+
+@keyframes brillo {
+  from {
+    background-position: 100% 50%;
+  }
+  to {
+    background-position: 0 50%;
+  }
+}
+
+/* --- Menos movimiento ------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

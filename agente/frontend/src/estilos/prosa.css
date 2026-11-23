@@ -1,0 +1,219 @@
+/* Texto en Markdown: reportes del agente y mensajes del chat. */
+
+.prosa {
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.prosa > :first-child {
+  margin-top: 0;
+}
+
+.prosa > :last-child {
+  margin-bottom: 0;
+}
+
+.prosa p,
+.prosa ul,
+.prosa ol,
+.prosa pre,
+.prosa blockquote,
+.prosa .md-tabla {
+  margin: 0 0 0.9em;
+}
+
+.prosa ul {
+  padding-left: 1.25em;
+  list-style: disc;
+}
+
+.prosa ol {
+  padding-left: 1.6em;
+  list-style: decimal;
+}
+
+.prosa li + li {
+  margin-top: 0.35em;
+}
+
+.prosa li > ul,
+.prosa li > ol {
+  margin: 0.35em 0 0;
+}
+
+.prosa li > p {
+  margin-bottom: 0.35em;
+}
+
+.prosa li::marker {
+  color: var(--texto-3);
+}
+
+.prosa ul.contains-task-list {
+  padding-left: 0.2em;
+  list-style: none;
+}
+
+.prosa input[type='checkbox'] {
+  margin: 0 0.5em 0 0;
+  accent-color: var(--acento);
+}
+
+.prosa strong {
+  font-weight: 600;
+}
+
+.prosa a {
+  color: var(--acento-texto);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.md-enlace-inerte {
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+
+.md-imagen {
+  color: var(--texto-3);
+  font-style: italic;
+}
+
+.md-t {
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  line-height: 1.3;
+  scroll-margin-top: 72px;
+  text-wrap: balance;
+}
+
+.md-t:focus {
+  outline: none;
+}
+
+.md-t:focus-visible {
+  outline: 2px solid var(--acento);
+  outline-offset: 4px;
+}
+
+.md-t1 {
+  margin: 1.4em 0 0.7em;
+  font-size: 1.25rem;
+}
+
+.md-t2 {
+  margin: 1.8em 0 0.6em;
+  font-size: 1.0625rem;
+}
+
+.md-t3 {
+  margin: 1.5em 0 0.5em;
+  font-size: 0.9375rem;
+}
+
+.md-t4,
+.md-t5,
+.md-t6 {
+  margin: 1.4em 0 0.4em;
+  color: var(--texto-2);
+  font-size: 0.875rem;
+}
+
+/* En el reporte, cada sección principal arranca con un filete. */
+.reporte .md-t2 {
+  margin-top: 2em;
+  padding-top: 1.4em;
+  border-top: 1px solid var(--borde);
+}
+
+.prosa code {
+  padding: 0.1em 0.36em;
+  border: 1px solid var(--borde);
+  border-radius: 5px;
+  background: var(--superficie-2);
+  font-size: 0.86em;
+  overflow-wrap: anywhere;
+  /* Si el código se parte entre líneas, cada trozo conserva su caja completa. */
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+.prosa pre {
+  padding: 12px 14px;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-m);
+  background: var(--fondo);
+  line-height: 1.55;
+  overflow-x: auto;
+}
+
+.prosa pre code {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 0.8125rem;
+  overflow-wrap: normal;
+  white-space: pre;
+}
+
+.prosa blockquote {
+  padding: 2px 0 2px 14px;
+  border-left: 3px solid var(--borde-fuerte);
+  color: var(--texto-2);
+}
+
+.prosa blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+.prosa hr {
+  margin: 1.6em 0;
+  border: 0;
+  border-top: 1px solid var(--borde);
+}
+
+/* Las tablas se desplazan dentro de su caja: la página nunca se ensancha. */
+.md-tabla {
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-m);
+  overflow-x: auto;
+}
+
+.md-tabla:focus-visible {
+  outline-offset: 1px;
+}
+
+.md-tabla table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+/* Las celdas no parten palabras salvo que superen el ancho máximo: una carga larga ensancha la
+   tabla (que se desplaza en su caja) en lugar de quedar troceada letra a letra. */
+.md-tabla th,
+.md-tabla td {
+  max-width: 44ch;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--borde);
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: break-word;
+}
+
+.md-tabla code {
+  overflow-wrap: break-word;
+}
+
+.md-tabla th {
+  background: var(--fondo);
+  color: var(--texto-2);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.md-tabla tr:last-child td {
+  border-bottom: 0;
+}

@@ -1,0 +1,68 @@
+#!/var/ossec/framework/python/bin/python3
+"""Integración de Wazuh: envía la alerta al agente SOC (Cloud Run) por HTTPS.
+
+Wazuh la invoca así:  custom-agente-soc <archivo_alerta> <api_key> <hook_url>
+La llamada se autentica con un token de identidad de la cuenta de servicio de
+la VM, obtenido del servidor de metadatos; Cloud Run lo valida con IAM
+(la cuenta necesita roles/run.invoker sobre el servicio del agente).
+"""
+import json
+import os
+import ssl
+import sys
+import urllib.parse
+import urllib.request
+
+METADATA = (
+    "http://metadata.google.internal/computeMetadata/v1/instance/"
+    "service-accounts/default/identity?format=full&audience="
+)
+LOG = "/var/ossec/logs/integrations.log"
+
+
+def log(message):
+    try:
+        with open(LOG, "a") as f:
+            f.write("custom-agente-soc: %s\n" % message)
+    except OSError:
+        pass
+
+
+def tls_context():
+    """El Python que trae Wazuh no conoce las CA del sistema: se las indicamos."""
+    for cafile in ("/etc/ssl/certs/ca-certificates.crt", "/etc/pki/tls/certs/ca-bundle.crt"):
+        if os.path.exists(cafile):
+            return ssl.create_default_context(cafile=cafile)
+    return ssl.create_default_context()
+
+
+def main():
+    alert_file, hook_url = sys.argv[1], sys.argv[3]
+    with open(alert_file) as f:
+        alert = json.load(f)
+
+    parts = urllib.parse.urlsplit(hook_url)
+    audience = "%s://%s" % (parts.scheme, parts.netloc)
+    token_request = urllib.request.Request(
+        METADATA + urllib.parse.quote(audience, safe=""),
+        headers={"Metadata-Flavor": "Google"},
+    )
+    token = urllib.request.urlopen(token_request, timeout=10).read().decode()
+
+    request = urllib.request.Request(
+        hook_url,
+        data=json.dumps(alert).encode(),
+        headers={"Authorization": "Bearer " + token, "Content-Type": "application/json"},
+        method="POST",
+    )
+    with urllib.request.urlopen(request, timeout=30, context=tls_context()) as response:
+        log("regla %s -> HTTP %s %s" % (
+            alert.get("rule", {}).get("id"), response.status, response.read().decode()[:200]))
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:  # no interrumpir a wazuh-integratord
+        log("ERROR %r" % (exc,))
+        sys.exit(1)

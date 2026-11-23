@@ -1,0 +1,25 @@
+{
+  "eval_cases": [
+    {
+      "eval_case_id": "capacidades",
+      "prompt": {
+        "role": "user",
+        "parts": [{"text": "Hola, ¿en qué me puedes ayudar?"}]
+      }
+    },
+    {
+      "eval_case_id": "revisar_alertas_y_reportar",
+      "prompt": {
+        "role": "user",
+        "parts": [{"text": "Revisa las alertas de Wazuh de las últimas 24 horas y genera los reportes de incidente"}]
+      }
+    },
+    {
+      "eval_case_id": "playbook_idor",
+      "prompt": {
+        "role": "user",
+        "parts": [{"text": "¿Cómo debemos contener un ataque IDOR sobre /api/pedidos según nuestros playbooks?"}]
+      }
+    }
+  ]
+}

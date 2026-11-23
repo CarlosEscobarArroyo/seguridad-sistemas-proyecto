@@ -1,0 +1,545 @@
+/* Detalle de una investigación. El contenedor de consulta es el panel de lectura (@container panel):
+   la disposición depende del ancho del panel, no del de la ventana. */
+
+.detalle {
+  max-width: 1120px;
+  margin-inline: auto;
+  padding: 28px clamp(16px, 4cqi, 40px) 72px;
+}
+
+.detalle-esqueleto {
+  display: grid;
+  gap: 16px;
+}
+
+/* --- Cabecera ----------------------------------------------------------------------------- */
+
+.det-cab {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.det-cab h2 {
+  max-width: 28em;
+  font-size: clamp(1.3125rem, 1.05rem + 1.3cqi, 1.75rem);
+  font-weight: 650;
+  letter-spacing: -0.022em;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.det-insignias {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+/* --- Cuerpo: una columna o, con sitio, contenido + columna de datos ------------------------ */
+
+.det-cuerpo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 28px;
+}
+
+.det-inicio,
+.det-resto {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  min-width: 0;
+}
+
+.det-resto {
+  gap: 36px;
+}
+
+.det-inicio:empty {
+  display: none;
+}
+
+.det-lateral {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+  align-items: start;
+  gap: 16px;
+  min-width: 0;
+}
+
+.indice {
+  display: none;
+}
+
+@container panel (min-width: 920px) {
+  .det-cuerpo {
+    grid-template-columns: minmax(0, 1fr) 296px;
+    grid-template-areas:
+      'inicio lateral'
+      'resto lateral';
+    align-items: start;
+    gap: 36px 48px;
+  }
+
+  .det-inicio {
+    grid-area: inicio;
+  }
+
+  .det-resto {
+    grid-area: resto;
+  }
+
+  .det-lateral {
+    grid-area: lateral;
+    position: sticky;
+    top: 72px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    /* Alto de la ventana menos la barra superior, la barra del panel y un margen. */
+    max-height: calc(100dvh - var(--barra-alto) - 92px);
+    /* Margen interior para que el resalte de los enlaces del índice no quede recortado. */
+    margin-inline: -10px;
+    padding-inline: 10px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .indice {
+    display: block;
+  }
+}
+
+/* --- Conclusión ---------------------------------------------------------------------------- */
+
+.conclusion p {
+  max-width: 68ch;
+  margin-top: 8px;
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+/* --- Fichas de la columna de datos ---------------------------------------------------------- */
+
+.ficha {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-l);
+}
+
+.ficha > .rotulo {
+  margin-bottom: 12px;
+}
+
+@container panel (min-width: 920px) {
+  .ficha {
+    padding: 0 2px 22px;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .ficha + .ficha {
+    padding-top: 22px;
+    border-top: 1px solid var(--borde);
+  }
+}
+
+.datos {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+.datos dt {
+  color: var(--texto-3);
+  font-size: 0.8125rem;
+}
+
+.datos dd {
+  margin-top: 1px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.datos dd.con-accion {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 28px;
+}
+
+.dato-nota {
+  display: block;
+  margin-top: 2px;
+  color: var(--texto-2);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.dato-id {
+  color: var(--texto-2);
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+/* --- Cronología ----------------------------------------------------------------------------- */
+
+.crono-paso {
+  position: relative;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 12px;
+  padding-bottom: 10px;
+}
+
+.crono-paso:last-child {
+  padding-bottom: 0;
+}
+
+/* Línea que une cada paso con el siguiente. */
+.crono-paso:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 28px;
+  bottom: 0;
+  left: 13px;
+  width: 2px;
+  background: var(--borde);
+}
+
+.crono-punto {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--borde);
+  border-radius: 50%;
+  background: var(--superficie-2);
+  color: var(--texto-2);
+}
+
+.crono-paso.hecho:last-child .crono-punto {
+  color: var(--exito);
+}
+
+.crono-paso.activo .crono-punto {
+  border-color: var(--acento-suave-2);
+  background: var(--acento-suave);
+  color: var(--acento-texto);
+}
+
+.crono-paso.peligro .crono-punto {
+  border-color: var(--peligro-borde);
+  background: var(--peligro-suave);
+  color: var(--peligro);
+}
+
+.crono-paso.atencion .crono-punto {
+  border-color: var(--atencion-borde);
+  background: var(--atencion-suave);
+  color: var(--atencion);
+}
+
+.crono-titulo {
+  padding-top: 4px;
+  font-weight: 550;
+  line-height: 1.35;
+}
+
+.crono-fecha {
+  color: var(--texto-3);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.crono-tramo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 13px;
+  padding: 4px 0 14px 25px;
+  border-left: 2px solid var(--borde);
+  color: var(--texto-2);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+/* --- Índice del reporte --------------------------------------------------------------------- */
+
+.indice ul {
+  display: grid;
+  gap: 1px;
+  margin-inline: -8px;
+}
+
+.indice button {
+  display: block;
+  width: 100%;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: var(--radio-s);
+  background: none;
+  color: var(--texto-2);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  text-align: left;
+  overflow-wrap: anywhere;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+}
+
+.indice button:hover {
+  background: var(--superficie-2);
+  color: var(--texto);
+}
+
+/* --- Secciones ------------------------------------------------------------------------------ */
+
+.seccion {
+  min-width: 0;
+}
+
+.seccion > h3,
+.seccion-cab h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.seccion > h3 {
+  margin-bottom: 12px;
+}
+
+.seccion-cab {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--borde);
+}
+
+.contador {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--superficie-3);
+  color: var(--texto-2);
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.acciones.en-caja {
+  gap: 0;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-m);
+  overflow: hidden;
+}
+
+.acciones.en-caja li {
+  align-items: center;
+  padding: 10px 12px;
+}
+
+.acciones.en-caja li + li {
+  border-top: 1px solid var(--borde);
+}
+
+.accion-hecha {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--exito);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* --- Solicitud HTTP ------------------------------------------------------------------------- */
+
+.solicitud {
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-m);
+  overflow: hidden;
+}
+
+.sol-linea {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  padding: 12px 14px;
+  background: var(--fondo);
+}
+
+.sol-metodo {
+  padding: 2px 8px;
+  border-radius: var(--radio-s);
+  background: var(--texto);
+  color: var(--superficie);
+  font-family: var(--fuente-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.sol-ruta {
+  min-width: 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.sol-codigo {
+  margin-left: auto;
+  padding: 1px 8px;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-s);
+  color: var(--texto-2);
+  font-family: var(--fuente-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.sol-datos > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--borde);
+}
+
+.sol-datos dt {
+  color: var(--texto-3);
+  font-size: 0.8125rem;
+}
+
+.sol-datos dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.sol-datos pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.55;
+}
+
+@container panel (min-width: 600px) {
+  .sol-datos > div {
+    grid-template-columns: 168px minmax(0, 1fr);
+    gap: 16px;
+  }
+}
+
+details > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--texto-2);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  list-style: none;
+}
+
+details > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Triángulo del desplegable, dibujado con bordes para que herede el color del texto. */
+details > summary::after {
+  content: '';
+  width: 7px;
+  height: 7px;
+  margin-left: auto;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform 0.15s;
+}
+
+details[open] > summary::after {
+  transform: translateY(1px) rotate(225deg);
+}
+
+details > summary:hover {
+  color: var(--texto);
+}
+
+.sol-cruda {
+  border-top: 1px solid var(--borde);
+}
+
+.sol-cruda > summary {
+  padding: 11px 14px;
+}
+
+.sol-cruda > summary:focus-visible {
+  outline-offset: -2px;
+}
+
+.sol-cruda-caja {
+  position: relative;
+  border-top: 1px solid var(--borde);
+  background: var(--fondo);
+}
+
+.sol-cruda-caja > .boton {
+  position: absolute;
+  top: 8px;
+  right: 18px;
+}
+
+.sol-cruda-caja pre {
+  max-height: 380px;
+  padding: 14px;
+  overflow: auto;
+  font-size: 0.75rem;
+  line-height: 1.6;
+  tab-size: 2;
+  white-space: pre;
+}
+
+.sol-cruda-caja pre:focus-visible {
+  outline-offset: -2px;
+}
+
+/* --- Reporte --------------------------------------------------------------------------------- */
+
+.reporte {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+.reporte > .prosa {
+  max-width: 72ch;
+}
+
+.respuesta-final {
+  margin-top: 24px;
+  padding: 12px 14px;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-m);
+}
+
+.respuesta-final[open] > summary {
+  margin-bottom: 12px;
+}

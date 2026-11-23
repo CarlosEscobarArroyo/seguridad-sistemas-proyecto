@@ -17,3 +17,8 @@ class PedidoCreate(BaseModel):
 class ResenaCreate(BaseModel):
     autor: str
     comentario: str
+
+
+class BloqueoCreate(BaseModel):
+    ip: str
+    motivo: str = ""
